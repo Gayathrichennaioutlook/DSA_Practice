@@ -1,0 +1,75 @@
+#include <bits/stdc++.h>
+
+using namespace std;
+
+typedef long long ll;
+
+const int MOD = 1e9 + 7;
+
+ll bigMod (ll a, ll e) {
+  if (e == -1) e = MOD - 2;
+  ll ret = 1;
+  while (e) {
+    if (e & 1) ret = ret * a % MOD;
+    a = a * a % MOD, e >>= 1;
+  }
+  return ret;
+}
+
+int main() {
+  cin.tie(0);
+  ios_base::sync_with_stdio(0);
+  int t;
+  cin >> t;
+  while (t--) {
+    int n, k;
+    cin >> n >> k;
+    vector <int> a(n);
+    for (int &x : a) cin >> x;
+    string s; cin >> s;
+    vector <ll> inv(n + 1);
+    for (int i = 1; i <= n; ++i) inv[i] = bigMod(i, -1);
+    vector <vector <int>> DP(n);
+    for (int i = 0; i < n; ++i) {
+      DP[i].resize(n, 0);
+      for (int j = i; j < n; ++j) {
+        DP[i][j] = a[j] + (j == i ? 0 : DP[i][j - 1]);
+        if (DP[i][j] >= MOD) DP[i][j] -= MOD;
+      }
+    } 
+    for (int i = k - 1; i >= 0; --i) {
+      char &c = s[i];
+      vector <vector <int>> row(n), col(n);
+      for (int l = 0; l < n; ++l) {
+        row[l].resize(n, 0);
+        for (int r = l; r < n; ++r) {
+          row[l][r] = DP[l][r] + (r == l ? 0 : row[l][r - 1]);
+          if (row[l][r] >= MOD) row[l][r] -= MOD;
+        }
+      }
+      for (int r = 0; r < n; ++r) {
+        col[r].resize(n, 0);
+        for (int l = r; l >= 0; --l) {
+          col[l][r] = DP[l][r] + (l == r ? 0 : col[l + 1][r]);
+          if (col[l][r] >= MOD) col[l][r] -= MOD;
+        }
+      }
+      vector <vector <int>> newDP(n);
+      for (int l = n - 1; l >= 0; --l) {
+        newDP[l].resize(n, 0);
+        for (int r = l; r < n; ++r) {
+          if (l == r) {
+            newDP[l][r] = a[l];
+            continue;
+          }
+          newDP[l][r] = (c == 'L') ? row[l][r - 1] : col[l + 1][r];
+          newDP[l][r] = newDP[l][r] * inv[r - l] % MOD;
+        }
+      }
+      DP = newDP;
+    }
+    cout << DP[0][n - 1] << '\n';
+  }
+  return 0;
+}
+
